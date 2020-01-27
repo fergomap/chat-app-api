@@ -24,9 +24,6 @@ const chatsHandler = (request: Request, response: Response): void => {
     const clientChats: Chat[] = [];
 
     if (client.username) {
-        client.response = response;
-        client.connected = true;
-
         chats.forEach((chat: Chat) => {
             if (chat.id.includes(request.params.username)) {
                 clientChats.push(chat);
@@ -34,10 +31,11 @@ const chatsHandler = (request: Request, response: Response): void => {
         });
     } else {
         client.username = request.params.username;
-        client.response = response;
-        client.connected = true;
         clients.push(client);
     }
+    
+    client.response = response;
+    client.connected = true;
 
     response.write(`data: ${JSON.stringify(clientChats)}\n\n`);
     response.on(EventsEnum.CLOSE, () => {
@@ -56,7 +54,6 @@ const sendEventsToAll = (message: Message): void => {
 const sendMessage = (request: Request, response: Response): void => {
     const message: Message = jsonConvert.deserializeObject(request.body, MessageImp);
     const chat: Chat | undefined = chats.find((c: Chat) => c.id === message.chatId);
-    console.log(message);
 
     if (chat) {
         chat.messages.push(message);
@@ -68,9 +65,7 @@ const sendMessage = (request: Request, response: Response): void => {
 };
 
 const getConnectedClients = (request: Request, response: Response): void => {
-    response.json({
-        clients: clients.filter((client: Client) => client.connected).length}
-    );
+    response.json({clients: clients.filter((client: Client) => client.connected).length});
 };
 
 const searchClient = (request: Request, response: Response): void => {
